@@ -1,0 +1,12 @@
+# Portable project bootstrap, matching the supplied Python 3.13 environment.
+# Create/activate it, install a hardware-appropriate PyTorch wheel, then run:
+#   python -m pip install -e '.[dev]'
+# Runtime dependencies have a single source of truth: pyproject.toml.
+name: dapi2marker
+channels:
+  - conda-forge
+dependencies:
+  - python=3.13
+  - pip
+  - setuptools>=77
+  - wheel

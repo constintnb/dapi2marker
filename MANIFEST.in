@@ -1,0 +1,18 @@
+include README.md LICENSE THIRD_PARTY_NOTICES.md pyproject.toml .gitignore .gitattributes
+include environment.project.yml requirements-cu128.txt
+recursive-include src *.py
+recursive-include configs *.yaml
+recursive-include docs usage.md
+recursive-include docs validation.md
+recursive-include docs environment.md
+recursive-include splits *.json
+recursive-include scripts *.py
+recursive-include tests *.py
+recursive-include .github *.yml
+prune legacy
+prune ds
+prune ds_round2
+prune weights
+prune runs
+prune artifacts
+global-exclude *.py[cod]

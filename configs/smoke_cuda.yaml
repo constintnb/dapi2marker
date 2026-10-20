@@ -1,0 +1,10 @@
+# Two-step GPU check with the real small model and local pretrained VAE.
+extends: smoke.yaml
+runtime:
+  device: cuda
+paths:
+  output_dir: ../runs/smoke_cuda
+train:
+  mixed_precision: auto
+inference:
+  mixed_precision: auto

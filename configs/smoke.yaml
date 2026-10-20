@@ -1,0 +1,29 @@
+# Checks the real small architecture with a deliberately tiny training budget.
+extends: small.yaml
+runtime:
+  device: cpu
+paths:
+  output_dir: ../runs/smoke
+data:
+  max_train_samples: 4
+  max_val_samples: 2
+  adjacent_crop:
+    enabled: false
+diffusion:
+  timesteps: 8
+  ddim_steps: 2
+train:
+  batch_size: 2
+  num_workers: 0
+  mixed_precision: "no"
+  max_steps: 2
+  checkpoint_every_steps: 1
+  log_every_steps: 1
+evaluation:
+  every_steps: 1
+  num_samples_per_input: 1
+inference:
+  batch_size: 2
+  num_workers: 0
+  mixed_precision: "no"
+  num_samples_per_input: 1

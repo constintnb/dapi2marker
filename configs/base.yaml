@@ -1,0 +1,78 @@
+# Paths are relative to the YAML that declares them, independent of your cwd.
+runtime:
+  device: auto
+  matmul_precision: high
+  cpu_threads: 2
+paths:
+  manifest: ../splits/joint_cd45ro.json
+  output_dir: ../runs/small
+vae:
+  path: ../weights/sd-vae-ft-mse
+  repository: stabilityai/sd-vae-ft-mse
+  revision: main
+model:
+  base_channels: 80
+  time_dim: 256
+  spade_hidden_channels: 40
+  attention_heads: 8
+  dropout: 0.15
+  condition_encoder:
+    enabled: true
+    channels: [32, 64, 128]
+  global_condition:
+    enabled: false
+    hidden_channels: 64
+  freeu:
+    skip_scale: 1.0
+    backbone_scale: 1.0
+data:
+  sources:
+    colon: ../ds
+    liver: ../ds_round2
+  target: CD45RO
+  folds: 3
+  seed: 2026
+  sampling: tissue_balanced
+  max_train_samples: null
+  max_val_samples: null
+  adjacent_crop:
+    enabled: true
+    tissues: [liver]
+    layout: roi_row_col_stride256
+    tile_size: 256
+    probability: 0.5
+    max_shift_pixels: 64
+    max_attempts: 16
+    cache_megabytes_per_worker: 32
+diffusion:
+  timesteps: 1000
+  ddim_steps: 50
+train:
+  batch_size: 8
+  num_workers: 4
+  mixed_precision: bf16
+  learning_rate: 0.0001
+  weight_decay: 0.0001
+  gradient_clip_norm: 1.0
+  # Fixed optimizer-step budget makes folds comparable. This is a starting budget,
+  # not a claim that the small model needs exactly this many steps.
+  max_steps: 136800
+  checkpoint_every_steps: 10000
+  warmup_fraction: 0.05
+  ema_decay: 0.999
+  compile: false
+  seed: 2026
+  log_every_steps: 100
+  loss:
+    pixel_weight: 1.0
+    ssim_weight: 0.03
+evaluation:
+  every_steps: 10000
+  num_samples_per_input: 8
+  seed: 42026
+inference:
+  batch_size: 8
+  num_workers: 4
+  mixed_precision: bf16
+  num_samples_per_input: 8
+  seed: 42026
