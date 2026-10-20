@@ -1,10 +1,11 @@
-# Local validation record
+# Validation record
 
 Validated on 2026-10-10 with Python 3.12.14, macOS arm64, CPU FP32.
-The CPU test suite was rechecked on 2026-10-11: **41 tests passed**;
+The CPU test suite was rechecked on 2026-10-20: **41 tests passed**;
 Ruff lint/format checks and `pip check` also passed.
-The release is not benchmarked for CUDA, mixed precision, distributed training,
-or predictive accuracy.
+Completed single-device CUDA/bf16 results were reviewed on 2026-10-20 and are
+summarized below. Distributed training and throughput/memory benchmarks remain
+unvalidated.
 
 | Dependency | Tested version |
 | --- | --- |
@@ -36,7 +37,8 @@ unavailable. CUDA-dependent branches use mocks in this CPU suite; they do not
 establish CUDA execution or performance. A local real `doctor` invocation
 reported CPU-only PyTorch, and `--require-cuda` correctly returned exit code 1.
 The official cu128 index was checked for a Python 3.13/Linux x86_64 wheel.
-The intended RTX 4090 server has not been accessed or tested.
+The installation profile is separate from the returned training artifacts;
+those artifacts do not contain a complete package-version or GPU model report.
 
 A separate real-data smoke run used `configs/smoke.yaml`: the actual 23,560,572
 parameter small model, local pretrained VAE, four train tiles, two validation
@@ -58,7 +60,31 @@ The local VAE config/weights fingerprint used for the smoke run is:
 9037a4e38afc665628bce1736c5ffa7827af09650f2be49615b1ba1677e4415d
 ```
 
-The baseline factory's 338 state entries have the same names and shapes as
-the archived original model. Project inference weights add architecture and
-provenance metadata; an old plain state dictionary still needs conversion into
-this format before use. Full small-model training has not been run.
+Project inference weights record architecture and provenance metadata in a
+self-describing checkpoint format.
+
+## Returned CUDA training results
+
+The returned `runs/small_cuda/` artifacts contain completed three-fold runs and
+a separate full-data run. All four used 136,800 optimizer steps, batch size 8,
+one device, and bf16. The full model used all 8,676 labeled tiles without a
+validation set. Each fold selected EMA weights using macro S50, evaluated with
+50 DDIM steps and eight decoded draws per input. The best steps were 130,000,
+136,800, and 130,000; mean fold S50 was 66.8384 with sample standard deviation
+0.8263. See the [README](../README.md#reference-results) and
+[reference metrics](reference_results.json) for all reported values.
+
+The returned OOF CSV was checked to cover all 8,676 labeled samples exactly once.
+Its reaggregated metrics match the JSON report; each fold's validation IDs match
+the fixed manifest, and its training and validation ROI groups are disjoint.
+The four train logs have complete, finite records at every 100 steps. Three
+best-fold weights and the final full-data weights were loaded with
+`weights_only=True`; all tensors are finite and the recorded step, fold/full,
+manifest fingerprint, and VAE fingerprint agree with the result files.
+
+These checks inspect returned files and recompute metrics from saved per-tile
+scores. CUDA inference was not repeated locally. The package-version table
+above describes local CPU validation, and the cu128 installation profile does
+not establish the exact packages used by the returned training runs. The
+reference scores are validation-checkpoint selection results; independent
+external test performance and patient-level generalization remain unevaluated.

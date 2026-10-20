@@ -4,25 +4,56 @@ Conditional latent diffusion for **DAPI → CD45RO** image translation across
 colon and liver tissue. The project provides a configurable UNet, a frozen
 pretrained VAE, fixed ROI-level three-fold cross-validation, and full-data training.
 
-This is a training implementation. No accuracy claim is made for the small
-model: it must be retrained and compared with the baseline using identical folds.
+Reference metrics from completed fixed-ROI training runs are reported below.
 
 ## Model size
 
 The budget counts **all trainable UNet and condition encoder parameters**.
 The pretrained `sd-vae-ft-mse` VAE remains frozen and is excluded from this budget.
 
-| Preset | UNet widths | Time embedding | SPADE hidden | Trainable parameters |
-| --- | --- | --- | --- | --- |
-| `configs/baseline.yaml` | 256 / 512 / 1024 | 1024 | 128 | 236,779,852 |
-| `configs/small.yaml` | 80 / 160 / 320 | 256 | 40 | **23,560,572 (9.95%)** |
+| Component | Parameters | Training |
+| --- | ---: | --- |
+| UNet + condition encoder | **23,560,572** | Trainable |
+| Pretrained VAE | 83,653,863 | Frozen |
+| Total | 107,214,435 | |
 
-Both retain the three-stage condition encoder (32 / 64 / 128), residual block
-layout, five attention blocks, and the final up stage without SPADE.
+The `small.yaml` and `small_cuda.yaml` presets use UNet widths 80 / 160 / 320,
+time embedding width 256, and SPADE hidden width 40. The architecture includes
+the three-stage condition encoder (32 / 64 / 128), five attention blocks, and
+the final up stage without SPADE.
 Attention heads, dropout, condition widths, optional global conditioning, and
-inference branch scales are configurable. The frozen VAE adds 83,653,863
-parameters; total small-model size including it is 107,214,435, or 33.46% of
-the baseline total. The 1/10 goal applies to the trainable part, not the total.
+inference branch scales are configurable.
+
+## Reference results
+
+The completed `configs/small_cuda.yaml` runs used single-device CUDA/bf16,
+batch size 8, and **136,800 optimizer updates per model**. Validation uses EMA
+weights, 50 DDIM steps, and an average of eight decoded draws per input.
+The fixed split covers 8,676 labeled tiles across 42 colon/liver ROIs.
+
+| Fold | Best step | PSNR (dB) ↑ | SSIM ↑ | S50 ↑ |
+| --- | ---: | ---: | ---: | ---: |
+| 0 | 130,000 | 24.52 | 0.7472 | 66.92 |
+| 1 | 136,800 | 23.72 | 0.7392 | 65.97 |
+| 2 | 130,000 | 24.89 | 0.7546 | 67.62 |
+| **Mean ± SD** | — | **24.37 ± 0.60** | **0.7470 ± 0.0077** | **66.84 ± 0.83** |
+
+Complete out-of-fold (OOF) results, with each tile evaluated by its held-out model:
+
+| Tissue | Tiles | ROIs | PSNR (dB) ↑ | SSIM ↑ | S50 ↑ |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Colon | 6,296 | 25 | 22.13 | 0.6623 | 59.64 |
+| Liver | 2,380 | 17 | 26.60 | 0.8318 | 74.04 |
+| **Overall OOF** | **8,676** | **42** | **24.37** | **0.7471** | **66.84** |
+
+Metrics average tiles within ROI, ROIs within tissue, then both tissues equally.
+SD is the sample standard deviation across three folds. S50 is
+`100 × (0.7 × SSIM + 0.3 × min(PSNR, 50) / 50)` per image. These reference
+scores use checkpoints selected on the same validation ROIs; they are
+cross-validation model-selection results, not an independent test score.
+The separate full-data model was trained on all 8,676 labels without validation.
+See [reference metrics](docs/reference_results.json) for unrounded values and
+the split fingerprint. Dataset images and training weights are stored locally.
 
 ## Install
 
@@ -39,7 +70,8 @@ CPU and CUDA are supported. `runtime.device: auto` selects CUDA when available,
 otherwise CPU. CPU uses FP32; CUDA precision supports `auto`, `no`, `fp16`, and
 `bf16`. Automatic precision selects native bf16 when supported, otherwise fp16.
 Default training is single-device; the implementation uses Accelerate, but
-multi-GPU and CUDA execution have not yet been validated for this release.
+distributed training remains unvalidated. Completed CUDA/bf16 runs are summarized
+in the reference results above.
 Compilation is off by default. Paths resolve relative to their declaring YAML,
 so commands also work outside the repository when given an absolute config path.
 
@@ -62,8 +94,9 @@ For Linux CPU/CUDA setup and runtime verification, see
 [environment notes](docs/environment.md). Python 3.13 requires PyTorch >= 2.6
 in the project dependency metadata. The original machine-specific
 `environment.yml` is retained locally and excluded from releases. Local
-validation used Python 3.12 on macOS CPU; Python 3.13/Linux is added to CI but
-has not been validated on the user's training server.
+validation used Python 3.12 on macOS CPU. Linux/Python 3.13 is included in CI;
+the returned CUDA training artifacts do not include a complete package-version
+report. See [validation notes](docs/validation.md) for the available evidence.
 
 For the supplied **RTX 4090 / CUDA 12.8** server, use the pinned PyTorch 2.11.0
 CUDA wheel profile after activating the environment:
@@ -192,8 +225,8 @@ dapi2marker predict --config configs/small.yaml --split test \
 Predictions are saved under separate `colon/` and `liver/` folders. Inference
 weights contain their architecture; incompatible presets, data/VAE fingerprints,
 or validation folds are rejected. Resume uses local trusted training-state
-files and requires the original data, budget, and training settings. Old plain
-state dictionaries and baseline-size weights cannot initialize the small model.
+files and requires the original data, budget, and training settings. Inference
+uses this project's self-describing checkpoint format.
 
 ## Check and package
 
@@ -218,15 +251,4 @@ backward pass. [Usage notes](docs/usage.md) describe outputs and evaluation limi
 [local validation](docs/validation.md) records the tested environment and smoke run.
 
 `scripts/package_source.py` creates `artifacts/dapi2marker-source.zip` from an
-explicit source allowlist. Wheel/sdist files appear in `dist/`. To publish to
-your own empty GitHub repository after reviewing the source:
-
-```bash
-git init -b main
-git add .
-git commit -m "Package configurable DAPI-to-CD45RO diffusion model"
-git remote add origin <YOUR_GITHUB_REPOSITORY_URL>
-git push -u origin main
-```
-
-No repository is published automatically by these setup or training commands.
+explicit source allowlist. Wheel/sdist files appear in `dist/`.

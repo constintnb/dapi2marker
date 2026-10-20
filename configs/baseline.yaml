@@ -1,7 +1,0 @@
-extends: base.yaml
-paths:
-  output_dir: ../runs/baseline
-model:
-  base_channels: 256
-  time_dim: 1024
-  spade_hidden_channels: 128

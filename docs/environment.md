@@ -110,11 +110,13 @@ dapi2marker cross-validate --config configs/small_cuda.yaml --include-full
 ```
 
 GPU 正式配置继承同一个小模型和固定 ROI 划分，默认 batch size 8、
-每个模型 136,800 个更新步。这个预算是起始配置；smoke 的 batch size 2
-不代表已经验证了 batch size 8 的显存峰值。三折统计可用于另定全量训练
-预算，具体流程见 [使用说明](usage.md)。
+每个模型 136,800 个更新步。已返回的三折和全量训练产物使用了这个预算，
+batch size 为 8、精度为 bf16；产物未记录显存峰值或吞吐率。新机器仍需
+先跑 smoke。三折统计可用于另定全量训练预算，具体流程见
+[使用说明](usage.md)。
 
 已完成的本地测试环境是 Python 3.12/macOS CPU，见
-[验证记录](validation.md)。CI 已增加 Linux/Python 3.13 测试项；增加配置
-并不表示该 CI 或用户训练服务器上的 CUDA 测试已经执行成功。RTX 4090
-上的自检、GPU smoke 和正式训练需要在实际服务器执行。
+[验证记录](validation.md)。CI 已增加 Linux/Python 3.13 测试项。2026-10-20
+已检查返回的三折和全量 bf16 训练产物，参考指标见
+[README](../README.md#reference-results)。产物未附完整软件版本清单，
+不能把推荐安装版本当作该次训练的实际环境记录。

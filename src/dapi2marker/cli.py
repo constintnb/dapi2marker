@@ -200,15 +200,9 @@ def main(argv=None):
             config["train"]["max_steps"] = args.max_steps
         validate_config(config)
         if args.command == "params":
-            baseline = dict(
-                config["model"], base_channels=256, time_dim=1024, spade_hidden_channels=128
-            )
-            count, reference = parameter_count(config["model"]), parameter_count(baseline)
             _print(
                 {
-                    "trainable_parameters": count,
-                    "baseline_parameters": reference,
-                    "baseline_ratio": count / reference,
+                    "trainable_parameters": parameter_count(config["model"]),
                     "scope": "UNet + condition encoder; frozen VAE excluded",
                 }
             )

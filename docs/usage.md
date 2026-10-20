@@ -17,14 +17,13 @@ The shared supervised target is CD45RO. Liver-only markers (CD68, HLA-DR,
 Vimentin) are not pooled with colon CD45RO. The package checks complete pairs
 for its configured target rather than silently dropping missing labels.
 
-## Training and comparison
+## Training
 
-Use the same manifest, sampling, loss, VAE, DDIM seeds/draw count, and optimizer
-step budget to compare `small.yaml` against `baseline.yaml`. The small model
-narrows UNet, time, and SPADE widths; it is not a pruned copy of a trained large
-model. A new training run is needed. Equal expected tissue sampling prevents
-colon's 6,296 tiles from overwhelming liver's 2,380 tiles; it uses sampling with
-replacement and does not guarantee a 50/50 ratio in each batch.
+`small.yaml` and `small_cuda.yaml` share the same 23,560,572-parameter trainable
+model. Keep the manifest, sampling, loss, VAE, DDIM seeds/draw count, and optimizer
+step budget fixed when comparing experiments. Equal expected tissue sampling
+prevents colon's 6,296 tiles from overwhelming liver's 2,380 tiles; it uses
+sampling with replacement and does not guarantee a 50/50 ratio in each batch.
 
 All augmentation applies identical transforms to input and target. Native-grid
 crop neighbors are indexed only from selected training records. Crops fall back
@@ -38,9 +37,10 @@ in the training objective. Validation always uses DDIM and decoded images.
 
 `max_steps` counts completed optimizer updates, not epochs or samples. A fold
 and a full run with equal step budgets therefore have different numbers of
-data passes. The default 136,800 is carried over as an initial update budget
-from the old 1,820-tile, batch-8, 600-epoch experiment (228 × 600); it is not an
-empirical recommendation for the new pooled task. First check a shorter budget.
+data passes. The default 136,800 is an explicit update budget. The completed
+reference runs used this budget; each fold selected its best checkpoint at
+130,000 or 136,800 steps. See the [reference results](../README.md#reference-results)
+before choosing the budget for a new dataset or experiment.
 
 ## Selection and reporting
 
@@ -94,5 +94,6 @@ weight metadata; changing it invalidates an automatic-precision resume.
 The default evaluation averages eight decoded draws per tile over 50 DDIM
 steps. On thousands of validation tiles this can be expensive; a short smoke
 configuration uses two steps and one draw. Keep final evaluation settings fixed
-when comparing models. CPU smoke and tests have been run locally; CUDA and
-distributed performance/precision need validation on the intended hardware.
+when comparing experiments. CPU smoke and tests have been run locally, and
+single-device CUDA/bf16 training results are included in the reference record.
+Distributed training and throughput/memory benchmarks remain unvalidated.

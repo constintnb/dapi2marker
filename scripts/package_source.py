@@ -31,6 +31,7 @@ def source_files(root=ROOT):
     paths.add(root / "docs" / "usage.md")
     paths.add(root / "docs" / "validation.md")
     paths.add(root / "docs" / "environment.md")
+    paths.add(root / "docs" / "reference_results.json")
     for directory, pattern in PATTERNS:
         paths.update((root / directory).rglob(pattern))
     for path in sorted(paths):

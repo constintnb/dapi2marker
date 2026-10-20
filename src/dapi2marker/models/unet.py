@@ -214,7 +214,7 @@ def group_norm(channels: int, groups: int = 8) -> nn.GroupNorm:
 
 
 class ConvNoSPADE(nn.Module):
-    """Baseline residual Conv block with SPADE replaced by GroupNorm."""
+    """Residual convolution block with GroupNorm and time conditioning."""
 
     def __init__(self, inc: int, outc: int, time_dim: int, dropout: float = 0.15):
         super().__init__()
@@ -240,8 +240,7 @@ class ConvNoSPADE(nn.Module):
         self.shortcut = nn.Conv2d(inc, outc, kernel_size=1) if inc != outc else nn.Identity()
 
     def forward(self, x, t_emb, cond=None):
-        # ``cond`` is accepted for interface compatibility, but deliberately
-        # ignored in this ablation block.
+        # Accept the shared block interface; this block uses time conditioning.
         h = self.conv1(self.norm1(x))
 
         scale_shift = self.time_mlp(t_emb).unsqueeze(-1).unsqueeze(-1)
@@ -290,8 +289,7 @@ class UpNoSPADE(nn.Module):
                 [dw // 2, dw - dw // 2, dh // 2, dh - dh // 2],
             )
 
-        # Keep the baseline inference-time branch scaling unchanged so the
-        # SPADE ablation is the only architectural variable.
+        # Apply the configured skip/backbone scales during inference.
         if not self.training:
             x2 = x2 * self.skip_scale
             x1 = x1 * self.backbone_scale

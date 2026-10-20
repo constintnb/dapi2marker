@@ -1,0 +1,96 @@
+{
+  "format_version": 1,
+  "reviewed_on": "2026-10-20",
+  "target": "CD45RO",
+  "configuration": "configs/small_cuda.yaml",
+  "manifest_fingerprint": "55ad62316a6fd7b83bde13ac14a2563ffad495f8312854b381d7bcb82dd637b1",
+  "trainable_parameters": 23560572,
+  "training": {
+    "optimizer_steps_per_run": 136800,
+    "batch_size": 8,
+    "world_size": 1,
+    "precision": "bf16",
+    "seed": 2026
+  },
+  "evaluation": {
+    "weights": "ema",
+    "ddim_steps": 50,
+    "draws_per_input": 8,
+    "seed": 42026,
+    "selection_metric": "macro.s50",
+    "weighting": "equal tissue, equal ROI within tissue"
+  },
+  "folds": [
+    {
+      "fold": 0,
+      "best_step": 130000,
+      "validation_tiles": 2909,
+      "macro": {
+        "psnr": 24.516123365407907,
+        "ssim": 0.7472246932529878,
+        "s50": 66.92364375200734
+      }
+    },
+    {
+      "fold": 1,
+      "best_step": 136800,
+      "validation_tiles": 2873,
+      "macro": {
+        "psnr": 23.715521443054083,
+        "ssim": 0.7391916985849336,
+        "s50": 65.9727317667778
+      }
+    },
+    {
+      "fold": 2,
+      "best_step": 130000,
+      "validation_tiles": 2894,
+      "macro": {
+        "psnr": 24.88894197636159,
+        "ssim": 0.754594713676938,
+        "s50": 67.61873392037084
+      }
+    }
+  ],
+  "fold_macro_mean": {
+    "psnr": 24.373528928274528,
+    "ssim": 0.7470037018382865,
+    "s50": 66.838369813052
+  },
+  "fold_macro_std": {
+    "psnr": 0.5995655236276995,
+    "ssim": 0.007703885148751723,
+    "s50": 0.8263077549599517
+  },
+  "out_of_fold": {
+    "tiles": 8676,
+    "rois": 42,
+    "tissues": {
+      "colon": {
+        "tiles": 6296,
+        "rois": 25,
+        "psnr": 22.13466012734885,
+        "ssim": 0.6623242984297808,
+        "s50": 59.643496966493956
+      },
+      "liver": {
+        "tiles": 2380,
+        "rois": 17,
+        "psnr": 26.602432394007764,
+        "ssim": 0.8318491194094988,
+        "s50": 74.04073764074917
+      }
+    },
+    "macro": {
+      "psnr": 24.368546260678308,
+      "ssim": 0.7470867089196398,
+      "s50": 66.84211730362156
+    }
+  },
+  "full_training": {
+    "steps": 136800,
+    "train_tiles": 8676,
+    "validation_tiles": 0
+  },
+  "interpretation": "Best checkpoints were selected using the reported validation ROIs; metrics are cross-validation model-selection results, not an independent test score."
+}

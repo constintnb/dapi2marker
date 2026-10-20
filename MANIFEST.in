@@ -5,6 +5,7 @@ recursive-include configs *.yaml
 recursive-include docs usage.md
 recursive-include docs validation.md
 recursive-include docs environment.md
+recursive-include docs reference_results.json
 recursive-include splits *.json
 recursive-include scripts *.py
 recursive-include tests *.py

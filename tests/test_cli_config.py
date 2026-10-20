@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -17,7 +18,6 @@ def test_preset_paths_resolved_independently_of_cwd(tmp_path, monkeypatch):
     assert config["data"]["sources"]["colon"] == str(ROOT / "ds")
     assert config["paths"]["manifest"] == str(ROOT / "splits" / "joint_cd45ro.json")
     assert config["vae"]["path"] == str(ROOT / "weights" / "sd-vae-ft-mse")
-    assert load_config(ROOT / "configs" / "baseline.yaml")["model"]["base_channels"] == 256
     assert load_config(ROOT / "configs" / "smoke.yaml")["train"]["mixed_precision"] == "no"
 
 
@@ -36,7 +36,10 @@ def test_cli_available_outside_repository(tmp_path):
         text=True,
     )
     assert result.returncode == 0, result.stderr
-    assert "23560572" in result.stdout
+    assert json.loads(result.stdout) == {
+        "trainable_parameters": 23560572,
+        "scope": "UNet + condition encoder; frozen VAE excluded",
+    }
     bad = subprocess.run(
         [sys.executable, "-m", "dapi2marker", "params", "--config", str(tmp_path / "missing.yaml")],
         cwd=tmp_path,

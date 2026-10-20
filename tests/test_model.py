@@ -6,13 +6,8 @@ from dapi2marker.models.factory import ModelSpec, create_model, parameter_count
 from dapi2marker.models.vae import VAE
 
 
-def test_exact_parameter_budget():
-    small = parameter_count(ModelSpec())
-    baseline = parameter_count(
-        ModelSpec(base_channels=256, time_dim=1024, spade_hidden_channels=128)
-    )
-    assert (small, baseline) == (23560572, 236779852)
-    assert 0.099 < small / baseline < 0.1
+def test_exact_parameter_count():
+    assert parameter_count(ModelSpec()) == 23560572
 
 
 def test_small_forward_backward():
