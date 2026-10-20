@@ -63,6 +63,15 @@ estimate; labeled external test data would be needed for that purpose.
 
 ## Files
 
+For single images outside the dataset, use `predict-image` as shown in the
+[README](../README.md#predict-a-single-image). It reads checkpoint architecture,
+diffusion metadata, and a matching local VAE without reading a training YAML or
+manifest. It produces one PNG and prints a JSON settings report. `predict` and
+`evaluate` retain their fixed-split fingerprint and validation-fold checks.
+Single-image sampling IDs depend on grayscale pixel contents and dimensions;
+fixed-split sampling IDs depend on tissue/ROI/tile identity. The same numeric
+seed therefore need not reproduce a reference tile's exact fixed-split output.
+
 Each fold uses `runs/<preset>/fold_0/`, `fold_1/`, or `fold_2/`. The full model
 uses `runs/<preset>/full/` and starts with a fresh model, not a CV checkpoint.
 

@@ -9,6 +9,7 @@ build/
 dist/
 artifacts/
 runs/
+outputs/
 /runs.zip
 weights/
 ds/

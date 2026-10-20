@@ -36,6 +36,7 @@ def parser():
         "train",
         "evaluate",
         "predict",
+        "predict-image",
         "cross-validate",
         "download-vae",
         "doctor",
@@ -47,6 +48,20 @@ def parser():
                 action="store_true",
                 help="Fail unless visible CUDA GPUs pass a tiny forward/backward check",
             )
+            continue
+        if name == "predict-image":
+            command.add_argument("--checkpoint", required=True, type=Path)
+            command.add_argument("--input", required=True, type=Path, help="One 8-bit DAPI image")
+            command.add_argument("--output", required=True, type=Path, help="Grayscale PNG output")
+            command.add_argument("--vae", type=Path, help="Matching local pretrained VAE directory")
+            command.add_argument("--steps", type=int, help="DDIM steps; default from checkpoint")
+            command.add_argument("--draws", type=int, default=8, help="Decoded draws to average")
+            command.add_argument("--seed", type=int, default=42026)
+            command.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
+            command.add_argument(
+                "--precision", choices=("auto", "no", "fp16", "bf16"), default="auto"
+            )
+            command.add_argument("--overwrite", action="store_true")
             continue
         _config_options(command)
         if name == "prepare-splits":
@@ -193,6 +208,24 @@ def main(argv=None):
             report = runtime_report()
             _print(report)
             return 1 if args.require_cuda and not report["cuda_usable"] else 0
+        if args.command == "predict-image":
+            from .inference import predict_image
+
+            _print(
+                predict_image(
+                    args.checkpoint,
+                    args.input,
+                    args.output,
+                    vae_path=args.vae,
+                    steps=args.steps,
+                    draws=args.draws,
+                    seed=args.seed,
+                    device=args.device,
+                    precision=args.precision,
+                    overwrite=args.overwrite,
+                )
+            )
+            return 0
         config = load_config(args.config)
         if args.device is not None:
             config["runtime"]["device"] = args.device
@@ -263,7 +296,7 @@ def main(argv=None):
             provenance = {"vae_path": path, "repository": repository, "revision": revision}
             (Path(path) / "source.json").write_text(json.dumps(provenance, indent=2) + "\n")
             _print(provenance)
-    except (ValueError, FileNotFoundError, FileExistsError, RuntimeError) as error:
+    except (ValueError, OSError, RuntimeError, FloatingPointError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1
     return 0

@@ -175,6 +175,41 @@ path and regenerate it. The provided manifest uses seed 2026.
 Original test inputs: 1,346 colon + 560 liver. They have no targets in this
 pipeline and therefore yield predictions rather than validation metrics.
 
+## Predict a single image
+
+Use a self-describing inference checkpoint (`model_final.pt`, `model_best.pt`,
+or `model_last.pt`) and a matching local pretrained VAE:
+
+```bash
+dapi2marker predict-image \
+  --checkpoint weights/model_final.pt \
+  --input examples/dapi.png \
+  --output outputs/cd45ro.png \
+  --steps 50 \
+  --draws 8
+```
+
+This command needs no YAML config, split manifest, ROI filename, labels, or
+original training data. Model architecture and diffusion settings come from
+the checkpoint. The VAE is searched beside the checkpoint as `sd-vae-ft-mse/`,
+then in `weights/sd-vae-ft-mse/` under the current directory, then at its recorded
+local path. Use `--vae /path/to/vae` to select it explicitly. The VAE fingerprint
+must match the checkpoint; downloads are explicit via `download-vae` above.
+
+Input is an 8-bit image, converted to grayscale and normalized as during
+training. Output is an 8-bit grayscale PNG with the original dimensions;
+right/bottom edge padding is cropped after prediction. High-bit-depth/float
+inputs require conversion to the training intensity range first. Input files
+remain unchanged, and existing outputs require `--overwrite` to replace.
+
+Optional flags include `--device cpu|cuda|auto`, `--precision auto|no|fp16|bf16`,
+`--seed 42026`, and `--vae`. CUDA auto precision selects native bf16 or fp16;
+CPU uses FP32. If omitted, steps come from the checkpoint (50 for the reference
+model); draws default to 8. The JSON printed on success records the settings.
+Standalone noise uses an ID derived from image pixels, so renaming a file
+preserves its random stream. Split-based evaluation uses ROI IDs and remains
+the entry point for reproducing the reference metrics.
+
 ## Run
 
 Check the four intended runs without starting training:

@@ -1,7 +1,7 @@
 # Validation record
 
 Validated on 2026-10-10 with Python 3.12.14, macOS arm64, CPU FP32.
-The CPU test suite was rechecked on 2026-10-20: **41 tests passed**;
+The CPU test suite was rechecked on 2026-10-20: **57 tests passed**;
 Ruff lint/format checks and `pip check` also passed.
 Completed single-device CUDA/bf16 results were reviewed on 2026-10-20 and are
 summarized below. Distributed training and throughput/memory benchmarks remain
@@ -88,3 +88,22 @@ above describes local CPU validation, and the cu128 installation profile does
 not establish the exact packages used by the returned training runs. The
 reference scores are validation-checkpoint selection results; independent
 external test performance and patient-level generalization remain unevaluated.
+
+## Standalone image inference
+
+`predict-image` was checked in temporary directories containing only an image,
+a self-describing checkpoint, and a matching tiny VAE. No training YAML,
+manifest, ROI filename, or original data directories were available. Tests
+also run the installed module outside the repository, check exact agreement
+with shared sampling and dataset normalization, stable noise after file
+renaming, padding/cropping, explicit VAE selection and mismatch rejection,
+invalid sampling settings, missing checkpoint metadata, output protection,
+high-bit-depth rejection, and safe rejection of training-state checkpoints.
+
+A separate real-weight CPU check used the completed full-data model and the
+local pretrained VAE, with 50 DDIM steps and eight decoded draws. It produced
+a 256×256 grayscale PNG from one 256×256 DAPI tile while running outside the
+project directory with explicit image/checkpoint/VAE paths. No split manifest
+or labels were read by this command. This confirms the standalone code path;
+it does not reproduce a fixed-split score because sampling IDs differ. CUDA
+execution of this new command has not been rechecked on the training server.
